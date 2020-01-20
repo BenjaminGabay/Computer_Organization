@@ -1,0 +1,42 @@
+//Fibonacci Number Generator
+//Given two initial numbers f0 and f1, the sequence will be generated
+// Author: Benjamin Gabay
+
+//Essentially f0 is f(t-1) and f1 is f(t-2)
+//msel=0 will select the starting values f0 and f1 of the Fibonacci Sequence
+//msel=1 will keep running the Fibonacci sequence with sum(t+1) ← sum(t) + sum(t-1) for
+//	clock cycle t
+//enable1=1 or enable2=1 or enable3=1 activate respective registers by loading the
+//	corresponding input values to corresponding register outputs
+//enable1=0 or enable2=0 or enable3=0 retain the register outputs from the previous
+//	cycle
+
+
+CHIP Fibonacci {
+	IN f0[16], enable1, msel, enable2, enable3, f1[16];
+	OUT out[16];
+
+	PARTS:
+	//Put your code here
+
+	//Select either f0 or the previously found sum to be num0
+	Mux16(a=f0, b=sum, sel=msel, out=out0);
+
+	//If enable1 is true then update the register and set num0 to the register value
+	Register(in=out0, load=enable1, out=num0);
+
+	//Select either f1 or the previously found num0 to be num1
+	Mux16(a=f1, b=num0, sel=msel, out=out1);
+
+	//If enable2 is true then update the register and set num1 to the register value
+	Register(in=out1, load=enable2, out=num1);
+
+	//Add the found num0 and num1 to find sum
+	//This essentially makes the found value the sum of the previous two values
+	Add16(a=num0, b=num1, out=sum0);
+
+	//If enable3 is true then update the register and set the output to the register value
+	//Also set sum to the output to be recycled to the f0 Mux on the next cycle
+	//	This allows f1 to become f0 and f0 to become the found sum on the next cycle
+	Register(in=sum0, load=enable3, out=out, out=sum);
+}

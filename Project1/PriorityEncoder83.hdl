@@ -1,0 +1,55 @@
+//Priority Encoder
+//input is 8-bit long array
+//output is 3-bit long array
+//Author: Benjamin Gabay
+
+CHIP PriorityEncoder83 {
+	IN a[8];
+	OUT out[3], idle;
+
+	PARTS:
+	//Your code starts here
+	
+	//The Not of every input
+	Not(in=a[0], out=Not0);
+	Not(in=a[1], out=Not1);
+	Not(in=a[2], out=Not2);
+	Not(in=a[3], out=Not3);
+	Not(in=a[4], out=Not4);
+	Not(in=a[5], out=Not5);
+	Not(in=a[6], out=Not6);
+	Not(in=a[7], out=Not7);
+	
+	//Find encoded value (first 1)
+	And(a=a[7], b=a[7], out=Seven);
+	And(a=a[6], b=Not7, out=Six);
+	And(a=Not6, b=Not7, out=Not67);
+	And(a=a[5], b=Not67, out=Five);
+	And(a=Not5, b=Not67, out=Not567);
+	And(a=a[4], b=Not567, out=Four);
+	And(a=Not4, b=Not567, out=Not4567);
+	And(a=a[3], b=Not4567, out=Three);
+	And(a=Not3, b=Not4567, out=Not34567);
+	And(a=a[2], b=Not34567, out=Two);
+	And(a=Not2, b=Not34567, out=Not234567);
+	And(a=a[1], b=Not234567, out=One);
+	And(a=Not1, b=Not234567, out=Not1234567);
+	And(a=a[0], b=Not1234567, out=Zero);
+	
+	//Idle if all 0s
+	And(a=Not0, b=Not1234567, out=idle);
+	
+	//1st bit output
+	Or(a=One, b=Three, out=OneOrThree);
+	Or(a=Five, b=Seven, out=FiveOrSeven);
+	Or(a=OneOrThree, b=FiveOrSeven, out=out[0]);
+	
+	//2nd bit output
+	Or(a=Two, b=Three, out=TwoOrThree);
+	Or(a=Six, b=Seven, out=SixOrSeven);
+	Or(a=TwoOrThree, b=SixOrSeven, out=out[1]);
+	
+	//3rd bit output
+	Or(a=Four, b=Five, out=FourOrFive);
+	Or(a=FourOrFive, b=SixOrSeven, out=out[2]);
+}

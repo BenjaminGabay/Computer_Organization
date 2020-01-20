@@ -1,0 +1,19 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/01/Mux.hdl
+// Author: Benjamin Gabay
+
+/** A student would fail an exam if he or she spent the previous night studying for the exam, 
+ * or if he or she has not had breakfast before the exam
+ */
+
+CHIP Exercise1 {
+    IN Studied, hadBreakfast; //Studied all night, and have had breakfast 
+    OUT isFailed; //Did the student failed the exam
+
+    PARTS:
+    // Put your code here:
+	Not(in=hadBreakfast, out=NoBreakfast);
+	Or(a=Studied, b=NoBreakfast, out=isFailed);
+}

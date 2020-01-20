@@ -1,0 +1,88 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/05/CPU.hdl
+
+//@Author: Benjamin Gabay
+
+/**
+ * The Hack CPU (Central Processing unit), consisting of an ALU,
+ * two registers named A and D, and a program counter named PC.
+ * The CPU is designed to fetch and execute instructions written in 
+ * the Hack machine language. In particular, functions as follows:
+ * Executes the inputted instruction according to the Hack machine 
+ * language specification. The D and A in the language specification
+ * refer to CPU-resident registers, while M refers to the external
+ * memory location addressed by A, i.e. to Memory[A]. The inM input 
+ * holds the value of this location. If the current instruction needs 
+ * to write a value to M, the value is placed in outM, the address 
+ * of the target location is placed in the addressM output, and the 
+ * writeM control bit is asserted. (When writeM==0, any value may 
+ * appear in outM). The outM and writeM outputs are combinational: 
+ * they are affected instantaneously by the execution of the current 
+ * instruction. The addressM and pc outputs are clocked: although they 
+ * are affected by the execution of the current instruction, they commit 
+ * to their new values only in the next time step. If reset==1 then the 
+ * CPU jumps to address 0 (i.e. pc is set to 0 in next time step) rather 
+ * than to the address resulting from executing the current instruction. 
+ */
+
+CHIP CPU {
+
+    IN  inM[16],         // M value input  (M = contents of RAM[A])
+        instruction[16], // Instruction for execution
+        reset;           // Signals whether to re-start the current
+                         // program (reset==1) or continue executing
+                         // the current program (reset==0).
+
+    OUT outM[16],        // M value output
+        writeM,          // Write to M? 
+        addressM[15],    // Address in data memory (of M)
+        pc[15];          // address of next instruction
+
+    PARTS:
+    // Put your code here:
+
+    //Get type of instruction
+    Not(in=instruction[15], out=Ainstruct);
+    Not(in=Ainstruct, out=Cinstruct);
+    
+    //C-inst and dest to A-reg
+    And(a=Cinstruct, b=instruction[5], out=ALUtoA);
+    Mux16(a=instruction, b=outALU, sel=ALUtoA, out=ARegisterIn);
+    
+    //Load A if A-inst or C-inst&dest to A-reg
+    Or(a=Ainstruct, b=ALUtoA, out=loadA);
+    ARegister(in=ARegisterIn, load=loadA, out=outA);
+    
+    //Select A or M based on a-bit
+    Mux16(a=outA, b=inM, sel=instruction[12], out=outAM);
+
+    //Load the D register from ALU
+    And(a=Cinstruct, b=instruction[4], out=loadD);
+    DRegister(in=outALU, load=loadD, out=outD);
+    
+    //Calculate using the ALU
+    ALU(x=outD, y=outAM, zx=instruction[11], nx=instruction[10], 
+        zy=instruction[9], ny=instruction[8], f=instruction[7],
+        no=instruction[6], out=outALU, zr=outZR, ng=outNG);
+        
+    //Set outputs for writing memory
+    Or16(a=false, b=outA, out[0..14]=addressM);
+    Or16(a=false, b=outALU, out=outM);
+    And(a=Cinstruct, b=instruction[3], out=writeM);
+    
+    //Calculate loadPC & incPC; whether to load PC with A register
+    And(a=outZR, b=instruction[1], out=JEQ);    //Output is zero and jump if zero
+    And(a=outNG, b=instruction[2], out=JLT);    //Output is neg and jump if neg
+    Or(a=outZR, b=outNG, out=LTE);  //Output is less than or equal to zero
+    Not(in=LTE, out=GT);            //Output is greater than zero
+    And(a=GT, b=instruction[0], out=JGT); //Output is greater than zero and jump if greater than zero
+    Or(a=JEQ, b=JLT, out=JLE);
+    Or(a=JLE, b=JGT, out=jumpToA);              //Load PC if cond met and jump if cond
+    And(a=Cinstruct, b=jumpToA, out=loadPC);    //Only jump if C instruction
+    Not(in=loadPC, out=incPC);                  //Only inc if not load
+
+    //Use PC with found values and loads
+    PC(in=outA, inc=incPC, load=loadPC, reset=reset, out[0..14]=pc);
+}

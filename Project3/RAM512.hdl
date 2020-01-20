@@ -1,0 +1,37 @@
+// This file is part of the materials accompanying the book 
+// "The Elements of Computing Systems" by Nisan and Schocken, 
+// MIT Press. Book site: www.idc.ac.il/tecs
+// File name: projects/03/b/RAM512.hdl
+// Author: Benjamin Gabay
+
+/**
+ * Memory of 512 registers, each 16 bit-wide. Out holds the value
+ * stored at the memory location specified by address. If load==1, then 
+ * the in value is loaded into the memory location specified by address 
+ * (the loaded value will be emitted to out from the next time step onward).
+ */
+
+CHIP RAM512 {
+    IN in[16], load, address[9];
+    OUT out[16];
+
+    PARTS:
+    // Put your code here:
+    //Select the desired register from the specific address
+    //Use Ram8 to split us the 8 registers into 64 registers
+    DMux8Way(in=load, sel=address[0..2], a=r1Load, b=r2Load, c=r3Load, d=r4Load, e=r5Load, f=r6Load, g=r7Load, h=r8Load);
+    
+    //Since the selected register is unknown, run all registers so
+    //that only the selected one will update the output if load is true
+    RAM64(in=in, load=r1Load, address=address[3..8], out=r1Out);
+    RAM64(in=in, load=r2Load, address=address[3..8], out=r2Out);
+    RAM64(in=in, load=r3Load, address=address[3..8], out=r3Out);
+    RAM64(in=in, load=r4Load, address=address[3..8], out=r4Out);
+    RAM64(in=in, load=r5Load, address=address[3..8], out=r5Out);
+    RAM64(in=in, load=r6Load, address=address[3..8], out=r6Out);
+    RAM64(in=in, load=r7Load, address=address[3..8], out=r7Out);
+    RAM64(in=in, load=r8Load, address=address[3..8], out=r8Out);
+    
+    //Output the updated output from the selected register
+    Mux8Way16(a=r1Out, b=r2Out, c=r3Out, d=r4Out, e=r5Out, f=r6Out, g=r7Out, h=r8Out, sel=address[0..2], out=out);
+}
